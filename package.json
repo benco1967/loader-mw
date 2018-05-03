@@ -1,0 +1,30 @@
+{
+  "name": "loader-mw",
+  "version": "1.0.0",
+  "description": "Middleware express pour précharger le tenant ou autre objet. Utilise req-custom et est compatible avec security-mw.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha ./test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "express",
+    "middleware",
+    "tenant"
+  ],
+  "author": "Benoît Chanclou",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.1.1",
+    "req-custom": "^1.0.0",
+    "sinon": "^4.5.0",
+    "sinon-chai": "^3.0.0"
+  },
+  "dependencies": {
+    "http-errors": "^1.6.3"
+  }
+}
