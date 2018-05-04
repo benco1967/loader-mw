@@ -19,15 +19,19 @@ describe('Loader', function() {
     it('throw error if no accessor', function () {
       expect(() => preLoader('foo')).to.throw("Please define the access method as first parameter of the middleware factory.");
     });
-    it('error if accessor provided has no arguments', function () {
-      expect(() => preLoader(() => null)).to.throw("The access method as first parameter need two and only two arguments");
-    });
-    it('error if accessor provided has more than one argument', function () {
-      expect(() => preLoader((a, b, c) => null)).to.throw("The access method as first parameter need two and only two arguments");
+    it('error if accessor provided has wrong number of arguments', function () {
+      expect(() => preLoader(function() {})).to.throw("The access method as first parameter need one to three arguments");
+      expect(() => preLoader(() => null)).to.throw("The access method as first parameter need one to three arguments");
+      expect(() => preLoader((a, b, c, d) => null)).to.throw("The access method as first parameter need one to three arguments");
+      expect(() => preLoader(function(a, b, c, d) {})).to.throw("The access method as first parameter need one to three arguments");
     });
     it('no error if accessor provided', function () {
-      expect(() => preLoader((id, req) => null)).to.not.throw();
-      expect(() => preLoader(function(id, req) {})).to.not.throw();
+      expect(() => preLoader((id) => null)).to.not.throw();
+      expect(() => preLoader(function(id) {})).to.not.throw();
+      expect(() => preLoader((id, name) => null)).to.not.throw();
+      expect(() => preLoader(function(id, name) {})).to.not.throw();
+      expect(() => preLoader((id, name, req) => null)).to.not.throw();
+      expect(() => preLoader(function(id, name, req) {})).to.not.throw();
     });
 
   });
@@ -35,8 +39,8 @@ describe('Loader', function() {
   describe('Load the object', function() {
     it('call the accessor and set the foo with promise', function (done) {
       const accessorSpy = sinon.spy();
-      const accessorFn = (id, req) => {
-        accessorSpy(id, req);
+      const accessorFn = (id, name, req) => {
+        accessorSpy(id, name, req);
         return Promise.resolve('payload');
       };
       const loader = preLoader(accessorFn, 'foo');
@@ -45,7 +49,7 @@ describe('Loader', function() {
       const res = {};
       const next = (err) => {
         expect(err).to.be.undefined;
-        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', req);
+        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', 'paramName', req);
         expect(req.getPrm('foo', 'value')).to.have.be.equals('payload');
         expect(req.getPrm('foo', 'err')).to.have.be.equals(null);
         done();
@@ -56,8 +60,8 @@ describe('Loader', function() {
 
     it('call the accessor and set the foo with value', function (done) {
       const accessorSpy = sinon.spy();
-      const accessorFn = (id, req) => {
-        accessorSpy(id, req);
+      const accessorFn = (id, name, req) => {
+        accessorSpy(id, name, req);
         return 'payload';
       };
       const loader = preLoader(accessorFn, 'foo');
@@ -66,7 +70,7 @@ describe('Loader', function() {
       const res = {};
       const next = (err) => {
         expect(err).to.be.undefined;
-        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', req);
+        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', 'paramName', req);
         expect(req.getPrm('foo', 'value')).to.have.be.equals('payload');
         expect(req.getPrm('foo', 'err')).to.have.be.equals(null);
         done();
@@ -77,8 +81,8 @@ describe('Loader', function() {
 
     it('call the accessor with req without custom parameter', function (done) {
       const accessorSpy = sinon.spy();
-      const accessorFn = (id, req) => {
-        accessorSpy(id, req);
+      const accessorFn = (id, name, req) => {
+        accessorSpy(id, name, req);
         return 'payload';
       };
       const loader = preLoader(accessorFn, 'foo');
@@ -86,7 +90,7 @@ describe('Loader', function() {
       const res = {};
       const next = (err) => {
         expect(err).to.be.undefined;
-        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', req);
+        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', 'paramName', req);
         expect(req.foo.value).to.have.be.equals('payload');
         expect(req.foo.err).to.have.be.equals(null);
         done();
@@ -97,8 +101,8 @@ describe('Loader', function() {
 
     it('call the accessor with req without custom parameter', function (done) {
       const accessorSpy = sinon.spy();
-      const accessorFn = (id, req) => {
-        accessorSpy(id, req);
+      const accessorFn = (id, name, req) => {
+        accessorSpy(id, name, req);
         return 'payload';
       };
       const loader = preLoader(accessorFn, 'foo', true);
@@ -106,7 +110,7 @@ describe('Loader', function() {
       const res = {};
       const next = (err) => {
         expect(err).to.be.undefined;
-        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', req);
+        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', 'paramName', req);
         expect(req.foo).to.have.be.equals('payload');
         done();
       };
@@ -116,8 +120,8 @@ describe('Loader', function() {
 
     it('call the accessor and set the parameter name with value', function (done) {
       const accessorSpy = sinon.spy();
-      const accessorFn = (id, req) => {
-        accessorSpy(id, req);
+      const accessorFn = (id, name, req) => {
+        accessorSpy(id, name, req);
         return 'payload';
       };
       const loader = preLoader(accessorFn);
@@ -126,7 +130,7 @@ describe('Loader', function() {
       const res = {};
       const next = (err) => {
         expect(err).to.be.undefined;
-        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', req);
+        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', 'paramName', req);
         expect(req.getPrm('paramName', 'value')).to.have.be.equals('payload');
         expect(req.getPrm('paramName', 'err')).to.have.be.equals(null);
         done();
@@ -140,14 +144,14 @@ describe('Loader', function() {
 
     function testErrorPromise(err, msg, status, done, name = 'foo') {
       const accessorSpy = sinon.spy();
-      const accessorFn = (id, req) => { accessorSpy(id, req); return Promise.reject(err); };
+      const accessorFn = (id, name, req) => { accessorSpy(id, name, req); return Promise.reject(err); };
       const loader = preLoader(accessorFn, name);
       const req = {};
       customParams()(req);
       const res = {};
       const next = (err) => {
         expect(err).to.be.undefined;
-        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', req);
+        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', 'paramName', req);
         expect(req.getPrm(name, 'value')).to.have.be.equals(null);
         expect(req.getPrm(name, 'err', 'message')).to.have.be.equals(msg);
         expect(req.getPrm(name, 'err', 'statusCode')).to.have.be.equals(status);
@@ -178,8 +182,8 @@ describe('Loader', function() {
 
     it('call the accessor throws an Error', function(done) {
       const accessorSpy = sinon.spy();
-      const accessorFn = (id, req) => {
-        accessorSpy(id, req);
+      const accessorFn = (id, name, req) => {
+        accessorSpy(id, name, req);
         throw createError(404);
       };
       const loader = preLoader(accessorFn, 'foo');
@@ -188,7 +192,7 @@ describe('Loader', function() {
       const res = {};
       const next = (err) => {
         expect(err).to.be.undefined;
-        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', req);
+        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', 'paramName', req);
         expect(req.getPrm('foo', 'value')).to.have.be.equals(null);
         expect(req.getPrm('foo', 'err', 'message')).to.have.be.equals('Not Found');
         expect(req.getPrm('foo', 'err', 'statusCode')).to.have.be.equals(404);
@@ -200,8 +204,8 @@ describe('Loader', function() {
 
     it('call the accessor returns an Error', function(done) {
       const accessorSpy = sinon.spy();
-      const accessorFn = (id, req) => {
-        accessorSpy(id, req);
+      const accessorFn = (id, name, req) => {
+        accessorSpy(id, name, req);
         return createError(404);
       };
       const loader = preLoader(accessorFn, 'foo');
@@ -210,7 +214,7 @@ describe('Loader', function() {
       const res = {};
       const next = (err) => {
         expect(err).to.be.undefined;
-        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', req);
+        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', 'paramName', req);
         expect(req.getPrm('foo', 'value')).to.have.be.equals(null);
         expect(req.getPrm('foo', 'err', 'message')).to.have.be.equals('Not Found');
         expect(req.getPrm('foo', 'err', 'statusCode')).to.have.be.equals(404);
@@ -222,7 +226,7 @@ describe('Loader', function() {
 
     it('call the accessor with raiseErr, call next with an Internal Server Error', function(done) {
       const accessorSpy = sinon.spy();
-      const accessorFn = (id, req) => { accessorSpy(id, req); return Promise.reject('error message'); };
+      const accessorFn = (id, name, req) => { accessorSpy(id, name, req); return Promise.reject('error message'); };
       const loader = preLoader(accessorFn, 'foo', true);
       const req = {};
       customParams()(req);
@@ -231,7 +235,7 @@ describe('Loader', function() {
         expect(err).not.to.be.undefined;
         expect(err.message).to.have.be.equals('error message');
         expect(err.statusCode).to.have.be.equals(500);
-        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', req);
+        expect(accessorSpy).to.have.been.calledWithExactly('paramValue', 'paramName', req);
         expect(req.hasPrm('foo')).to.have.be.false;
         done();
       };

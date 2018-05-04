@@ -39,9 +39,10 @@ module.exports = (accessorFn, usedName = null, raiseErr = false) => {
     throw Error(`Please define the access method as first parameter of the middleware factory.`);
   }
   // ... with ane and only one argument
-  const args = accessorFn.toString().match(/\(\s*([^)]*)\)/m)[1];
-  if (args.split(/,/).length !== 2) {
-    throw Error(`The access method as first parameter need two and only two arguments`);
+  const args = accessorFn.toString().match(/\(\s*([^)]*)\)/m)[1].replace(/\s/g, '');
+  const nbArgs = args.length === 0 ? 0 : args.split(/,/).length;
+  if (nbArgs < 1 || 3 < nbArgs) {
+    throw Error(`The access method as first parameter need one to three arguments`);
   }
 
   debug(`loader created`);
@@ -77,7 +78,7 @@ module.exports = (accessorFn, usedName = null, raiseErr = false) => {
     };
 
     try {
-      const value = accessorFn(id, req);
+      const value = accessorFn(id, paramName, req);
       if(value instanceof Promise) {
         value
           .then(setValue)
